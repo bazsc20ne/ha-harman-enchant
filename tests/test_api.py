@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import ipaddress
 import json
 from pathlib import Path
+import ssl
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -183,6 +186,58 @@ def test_bundled_certificate_loads() -> None:
     assert context.verify_mode.name == "CERT_NONE"
 
 
+# A self-signed certificate and its key, used here as the server side of a test speaker.
+_TEST_CERT = api.CERT_DIR / "cert.pem"
+_TEST_KEY = api.CERT_DIR / "key.pem"
+# The file starts with export attributes; keep the PEM block only.
+_TEST_PEM = _TEST_CERT.read_text()[_TEST_CERT.read_text().index("-----BEGIN CERTIFICATE-----") :]
+
+
+def test_recorded_certificate_is_required() -> None:
+    context = api.create_ssl_context(_TEST_PEM)
+    assert context.verify_mode.name == "CERT_REQUIRED"
+    assert not context.check_hostname
+
+
+async def _with_tls_server(check) -> None:
+    server_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    server_context.load_cert_chain(_TEST_CERT, _TEST_KEY)
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0, ssl=server_context)
+    async with server:
+        await check(server.sockets[0].getsockname()[1])
+
+
+def test_fetch_server_certificate_and_connect_with_it() -> None:
+    async def check(port: int) -> None:
+        pem = await api.fetch_server_certificate("127.0.0.1", api.create_ssl_context(), port=port)
+        assert ssl.PEM_cert_to_DER_cert(pem) == ssl.PEM_cert_to_DER_cert(_TEST_PEM)
+        # The recorded certificate is accepted.
+        _reader, writer = await asyncio.open_connection("127.0.0.1", port, ssl=api.create_ssl_context(pem))
+        writer.close()
+
+    asyncio.run(_with_tls_server(check))
+
+
+def test_fetch_server_certificate_unreachable() -> None:
+    with pytest.raises(api.EnchantConnectionError):
+        asyncio.run(api.fetch_server_certificate("127.0.0.1", api.create_ssl_context(), port=1))
+
+
+@pytest.mark.parametrize(("host", "addresses"), [("192.0.2.10", {"192.0.2.10"}), ("::1", {"::1"})])
+def test_resolve_addresses_of_ip(host: str, addresses: set[str]) -> None:
+    assert asyncio.run(api.resolve_addresses(host)) == addresses
+
+
+def test_resolve_addresses_of_name() -> None:
+    addresses = asyncio.run(api.resolve_addresses("localhost"))
+    assert addresses
+    assert all(ipaddress.ip_address(address).is_loopback for address in addresses)
+
+
 _EQ_LIST = {
     "active_eq_id": "1",
     "eq_list": [
@@ -286,6 +341,22 @@ def test_command_gives_up_after_second_closed_connection() -> None:
     with pytest.raises(api.EnchantConnectionError):
         asyncio.run(_client(session).command("getPowerState"))
     assert session.calls == 2
+
+
+class _OtherCertificateSession(_FakeSession):
+    """The TLS handshake fails: the speaker presents another certificate."""
+
+    def post(self, url: str, **kwargs: object) -> _FakeResponse:
+        self.calls += 1
+        key = SimpleNamespace(host="speaker.invalid", port=443, is_ssl=True, ssl=None)
+        raise api.aiohttp.ClientConnectorCertificateError(key, ssl.SSLCertVerificationError("self-signed"))
+
+
+def test_command_reports_another_certificate_without_retry() -> None:
+    session = _OtherCertificateSession(failures=0)
+    with pytest.raises(api.EnchantCertificateError):
+        asyncio.run(_client(session).command("getPowerState"))
+    assert session.calls == 1
 
 
 @pytest.mark.parametrize(

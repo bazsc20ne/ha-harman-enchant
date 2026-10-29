@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1
+
+- The speaker's server certificate is recorded when the speaker is added (for speakers added with 0.1.0: at the first start of this version), and every connection must present it. If it changes, Home Assistant asks whether to accept the new one.
+- Event notifications now also work for a speaker added by host name instead of IP address.
+- Diagnostics can be downloaded while the speaker is not set up.
+- The README images also show in HACS.
+- SECURITY.md: how to report a security problem privately.
+
 ## 0.1.0
 
 First release.

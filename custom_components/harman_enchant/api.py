@@ -22,6 +22,7 @@ import html
 import json
 from pathlib import Path
 import re
+import socket
 import ssl
 from typing import Any
 from xml.etree import ElementTree as ET
@@ -116,17 +117,50 @@ class EnchantUnsupportedCommand(EnchantError):
     """The speaker does not know this command."""
 
 
-def create_ssl_context(cert_dir: Path = CERT_DIR) -> ssl.SSLContext:
+class EnchantCertificateError(EnchantError):
+    """The speaker presented another certificate than the one recorded at setup."""
+
+
+def create_ssl_context(server_certificate: str | None = None, cert_dir: Path = CERT_DIR) -> ssl.SSLContext:
     """Build the TLS context with the client certificate.
 
     This reads files from disk, so call it from an executor.
-    The speakers use a self-signed server certificate, so it is not verified.
+    The speakers use self-signed server certificates. With ``server_certificate``
+    (PEM) only that certificate is accepted; without it the server certificate is
+    not checked, which is only used to read it at setup.
     """
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
+    if server_certificate:
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.load_verify_locations(cadata=server_certificate)
+    else:
+        context.verify_mode = ssl.CERT_NONE
     context.load_cert_chain(cert_dir / "cert.pem", cert_dir / "key.pem")
     return context
+
+
+async def fetch_server_certificate(host: str, ssl_context: ssl.SSLContext, port: int = 443) -> str:
+    """Return the server certificate of the speaker (PEM), read without checking it."""
+    try:
+        async with asyncio.timeout(REQUEST_TIMEOUT):
+            _reader, writer = await asyncio.open_connection(host, port, ssl=ssl_context)
+    except (TimeoutError, OSError) as err:
+        raise EnchantConnectionError(f"{host}: {err!r}") from err
+    try:
+        ssl_object = writer.get_extra_info("ssl_object")
+        certificate = ssl_object.getpeercert(binary_form=True) if ssl_object else None
+    finally:
+        writer.close()
+    if not certificate:
+        raise EnchantConnectionError(f"{host}: no server certificate")
+    return ssl.DER_cert_to_PEM_cert(certificate)
+
+
+async def resolve_addresses(host: str) -> set[str]:
+    """IP addresses of a host name; an IP address gives itself."""
+    infos = await asyncio.get_running_loop().getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    return {str(info[4][0]) for info in infos}
 
 
 def build_command_body(name: str, payload: dict[str, Any] | None = None) -> str:
@@ -483,6 +517,8 @@ class EnchantClient:
                         if check_status and response.status != 200:
                             raise EnchantCommandError(f"{label}: HTTP {response.status}")
                         return text
+            except aiohttp.ClientConnectorCertificateError as err:
+                raise EnchantCertificateError(f"{self.host}: {err.certificate_error}") from err
             except _STALE_CONNECTION_ERRORS as err:
                 if attempt:
                     raise EnchantConnectionError(f"{label}: {err!r}") from err
@@ -499,6 +535,8 @@ class EnchantClient:
                         raise EnchantCommandError(f"{path}: HTTP {response.status}")
                     data = await response.read()
                     return data, image_content_type(data, response.headers.get("Content-Type"))
+        except aiohttp.ClientConnectorCertificateError as err:
+            raise EnchantCertificateError(f"{self.host}: {err.certificate_error}") from err
         except (TimeoutError, aiohttp.ClientError, OSError) as err:
             raise EnchantConnectionError(f"{path}: {err!r}") from err
 

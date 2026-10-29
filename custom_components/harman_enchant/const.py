@@ -8,6 +8,9 @@ from .api import KIND_SOUNDBAR, KIND_SPEAKER
 DOMAIN = "harman_enchant"
 MANUFACTURER = "Harman Kardon"
 
+# Config entry key: the speaker's server certificate (PEM), recorded at setup.
+CONF_CERTIFICATE = "certificate"
+
 POLL_INTERVAL = timedelta(seconds=10)
 # Settings change rarely; they are read every SETTINGS_EVERY polls and after writes.
 SETTINGS_EVERY = 6

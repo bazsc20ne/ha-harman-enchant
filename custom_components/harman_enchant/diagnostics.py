@@ -9,9 +9,11 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 
+from .const import CONF_CERTIFICATE
 from .coordinator import EnchantConfigEntry
 
 TO_REDACT = {
+    CONF_CERTIFICATE,
     CONF_HOST,
     "BT_MAC",
     "DeviceName",
@@ -43,7 +45,10 @@ TO_REDACT = {
 
 async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: EnchantConfigEntry) -> dict[str, Any]:
     """Return redacted data about the speaker."""
-    coordinator = entry.runtime_data
+    coordinator = getattr(entry, "runtime_data", None)
+    if coordinator is None:
+        # Not set up, e.g. because the speaker's certificate changed.
+        return async_redact_data({"entry": dict(entry.data), "state": entry.state.value}, TO_REDACT)
     return async_redact_data(
         {
             "entry": dict(entry.data),

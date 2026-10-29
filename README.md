@@ -146,9 +146,9 @@ type: custom:harman-enchant-card
 entity: media_player.enchant_1100
 ```
 
-<img src="docs/images/card_equalizer.png" alt="Harman Kardon Enchant card, Equalizer tab, in the light and the dark theme" width="972">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/card_equalizer.png" alt="Harman Kardon Enchant card, Equalizer tab, in the light and the dark theme" width="972">
 
-<img src="docs/images/card_sound.png" alt="Harman Kardon Enchant card, Sound tab, in the light and the dark theme" width="972">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/card_sound.png" alt="Harman Kardon Enchant card, Sound tab, in the light and the dark theme" width="972">
 
 Point it at the media player of the speaker. The card finds the other entities of
 that speaker by itself and shows only what the speaker has, so the same card
@@ -192,7 +192,7 @@ The `name` lines are optional; without them the cards show the full entity names
 <details>
 <summary>Now playing, with artwork (soundbar and speaker)</summary>
 
-<img src="docs/images/builtin_media_control.png" alt="Media control card in the light and the dark theme" width="972">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/builtin_media_control.png" alt="Media control card in the light and the dark theme" width="972">
 
 ```yaml
 type: media-control
@@ -202,7 +202,7 @@ name: Enchant 1100
 
 A smaller version with playback and volume controls:
 
-<img src="docs/images/builtin_tile.png" alt="Tile card with playback and volume controls in the light and the dark theme" width="532">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/builtin_tile.png" alt="Tile card with playback and volume controls in the light and the dark theme" width="532">
 
 ```yaml
 type: tile
@@ -222,7 +222,7 @@ features:
 <details>
 <summary>Input (soundbar)</summary>
 
-<img src="docs/images/builtin_input.png" alt="Tile card with the input selector in the light and the dark theme" width="532">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/builtin_input.png" alt="Tile card with the input selector in the light and the dark theme" width="532">
 
 ```yaml
 type: tile
@@ -238,7 +238,7 @@ features:
 <details>
 <summary>Sound settings (soundbar)</summary>
 
-<img src="docs/images/builtin_sound.png" alt="Tile cards for the sound settings in the light and the dark theme" width="972">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/builtin_sound.png" alt="Tile cards for the sound settings in the light and the dark theme" width="972">
 
 ```yaml
 type: grid
@@ -288,7 +288,7 @@ cards:
 <details>
 <summary>Equalizer (soundbar and speaker)</summary>
 
-<img src="docs/images/builtin_equalizer.png" alt="Entities card with the equalizer in the light and the dark theme" width="972">
+<img src="https://raw.githubusercontent.com/bazsc20ne/ha-harman-enchant/main/docs/images/builtin_equalizer.png" alt="Entities card with the equalizer in the light and the dark theme" width="972">
 
 ```yaml
 type: entities
@@ -369,6 +369,19 @@ its UPnP events, so that track, volume and audio format changes show up at once.
 
 The client certificate in `custom_components/harman_enchant/certs/` is the one the
 vendor app uses; see [NOTICE](NOTICE) for where it comes from.
+
+When a speaker is added, the integration records the speaker's own server
+certificate, and later connections are accepted only if the speaker presents the
+same one. If it changes, the speaker stops working in Home Assistant until you
+confirm the new certificate under **Settings → Devices & services**. Confirm it
+only if you know why it changed; otherwise another device may be answering at the
+speaker's address. Event notifications are accepted only from the speaker's
+address.
+
+## Security
+
+Please report security problems privately, as described in
+[SECURITY.md](SECURITY.md).
 
 ## Disclaimer
 

@@ -6,13 +6,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 import hashlib
+import ipaddress
 import logging
 from typing import Any
 
 from aiohttp import web
+from homeassistant.components.network import async_get_source_ip
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -21,6 +23,7 @@ from .api import (
     NETWORK_SOURCES,
     SOURCE_WRITE_VALUES,
     STREAMING_MARKER,
+    EnchantCertificateError,
     EnchantClient,
     EnchantCommandError,
     EnchantConnectionError,
@@ -32,6 +35,7 @@ from .api import (
     normalize_source,
     parse_event,
     parse_group_info,
+    resolve_addresses,
 )
 from .const import (
     DOMAIN,
@@ -166,6 +170,8 @@ class EnchantCoordinator(DataUpdateCoordinator[EnchantData]):
         self._settings_due = True
         self._data = EnchantData()
         self._sids: dict[str, str] = {}
+        # Addresses of the speaker; event notifications are accepted only from these.
+        self._event_sources: set[str] = set()
         self._runner: web.AppRunner | None = None
         self._callback_base: str | None = None
         self._unsub_renew: CALLBACK_TYPE | None = None
@@ -195,6 +201,8 @@ class EnchantCoordinator(DataUpdateCoordinator[EnchantData]):
                 continue
             try:
                 self._data.answers[command] = await self.client.command(command)
+            except EnchantCertificateError as err:
+                raise ConfigEntryAuthFailed(str(err)) from err
             except EnchantUnsupportedCommand:
                 _LOGGER.debug("%s does not support %s", self.client.host, command)
                 self.unsupported.add(command)
@@ -265,8 +273,13 @@ class EnchantCoordinator(DataUpdateCoordinator[EnchantData]):
 
     # Events -------------------------------------------------------------
 
-    async def async_start_events(self, source_ip: str) -> None:
+    async def async_start_events(self) -> None:
         """Listen for UPnP event notifications and subscribe to them."""
+        await self._async_resolve_host()
+        speaker_ip = next((ip for ip in sorted(self._event_sources) if ipaddress.ip_address(ip).version == 4), None)
+        if speaker_ip is None:
+            raise EnchantConnectionError(f"{self.client.host} has no IPv4 address")
+        source_ip = await async_get_source_ip(self.hass, target_ip=speaker_ip)
         app = web.Application()
         app.router.add_route("NOTIFY", "/{service}", self._handle_notify)
         runner = web.AppRunner(app, access_log=None)
@@ -279,7 +292,16 @@ class EnchantCoordinator(DataUpdateCoordinator[EnchantData]):
         await self._async_renew_subscriptions()
         self._unsub_renew = async_track_time_interval(self.hass, self._async_renew_subscriptions, EVENT_RENEW_INTERVAL)
 
+    async def _async_resolve_host(self) -> None:
+        """Look up the speaker's addresses again; a host name can point elsewhere later."""
+        try:
+            self._event_sources = await resolve_addresses(self.client.host)
+        except OSError as err:
+            # Keep the addresses known so far.
+            _LOGGER.debug("%s could not be resolved: %s", self.client.host, err)
+
     async def _async_renew_subscriptions(self, *_: Any) -> None:
+        await self._async_resolve_host()
         for service in EVENT_SERVICES:
             try:
                 sid, _granted = await self.client.subscribe(
@@ -304,10 +326,12 @@ class EnchantCoordinator(DataUpdateCoordinator[EnchantData]):
             self._sids[service] = sid
 
     async def _handle_notify(self, request: web.Request) -> web.Response:
-        if request.remote != self.client.host:
+        if request.remote not in self._event_sources:
+            _LOGGER.debug("Ignored an event notification from %s", request.remote)
             return web.Response(status=403)
         body = await request.text()
         values = parse_event(body)
+        _LOGGER.debug("Event notification from %s: %s", request.remote, ", ".join(sorted(values)) or "no values")
         state = values.get("HarmanBarState")
         if isinstance(state, dict):
             info = state.get("tv_stream_info")

@@ -9,16 +9,15 @@ from pathlib import Path
 
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.components.network import async_get_source_ip
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
-from .api import EnchantClient, EnchantError, create_ssl_context
-from .const import DOMAIN
+from .api import EnchantCertificateError, EnchantClient, EnchantError, create_ssl_context, fetch_server_certificate
+from .const import CONF_CERTIFICATE, DOMAIN
 from .coordinator import EnchantConfigEntry, EnchantCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,11 +49,21 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: EnchantConfigEntry) -> bool:
     """Set up one speaker."""
     host = entry.data[CONF_HOST]
-    ssl_context = await hass.async_add_executor_job(create_ssl_context)
+    certificate = entry.data.get(CONF_CERTIFICATE)
+    if certificate is None:
+        # Added by an earlier version: record the certificate the speaker has now.
+        try:
+            certificate = await fetch_server_certificate(host, await hass.async_add_executor_job(create_ssl_context))
+        except EnchantError as err:
+            raise ConfigEntryNotReady(f"{host} is not reachable: {err}") from err
+        hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_CERTIFICATE: certificate})
+    ssl_context = await hass.async_add_executor_job(create_ssl_context, certificate)
     client = EnchantClient(host, async_get_clientsession(hass), ssl_context)
     try:
         device_info = (await client.command("getDeviceInfo")).get("device_info") or {}
         status = await client.command("getStatusEx")
+    except EnchantCertificateError as err:
+        raise ConfigEntryAuthFailed(str(err)) from err
     except EnchantError as err:
         raise ConfigEntryNotReady(f"{host} is not reachable: {err}") from err
 
@@ -63,8 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnchantConfigEntry) -> b
     entry.runtime_data = coordinator
 
     try:
-        source_ip = await async_get_source_ip(hass, target_ip=host)
-        await coordinator.async_start_events(source_ip)
+        await coordinator.async_start_events()
     except (OSError, EnchantError) as err:
         _LOGGER.warning("Event notifications from %s are not available: %s", host, err)
 

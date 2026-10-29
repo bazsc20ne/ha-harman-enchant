@@ -13,6 +13,10 @@
       },
       "zeroconf_confirm": {
         "description": "Do you want to add {name} ({host})?"
+      },
+      "reauth_confirm": {
+        "title": "Speaker certificate changed",
+        "description": "{name} ({host}) presents another security certificate than when it was added. Accept the new certificate only if you know why it changed; otherwise another device may be answering at this address."
       }
     },
     "error": {
@@ -22,6 +26,8 @@
     },
     "abort": {
       "already_configured": "This speaker is already set up.",
+      "reauth_successful": "The new certificate is accepted.",
+      "wrong_device": "Another speaker answers at this address. Remove this entry and add the speaker again.",
       "cannot_connect": "The speaker could not be reached.",
       "not_enchant": "This device is not a Harman Kardon Enchant speaker.",
       "sub_via_soundbar": "The Enchant Sub works through the Enchant soundbar it is paired with. Add the soundbar instead."
