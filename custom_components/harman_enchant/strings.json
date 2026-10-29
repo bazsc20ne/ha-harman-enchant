@@ -1,0 +1,113 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Enter the IP address or host name of the Enchant speaker. It must be on, connected to your network and set up in the Harman Kardon One app.",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "IP address or host name of the speaker, e.g. 192.0.2.10"
+        }
+      },
+      "zeroconf_confirm": {
+        "description": "Do you want to add {name} ({host})?"
+      }
+    },
+    "error": {
+      "cannot_connect": "The speaker could not be reached.",
+      "not_enchant": "This device is not a Harman Kardon Enchant speaker.",
+      "sub_via_soundbar": "The Enchant Sub works through the Enchant soundbar it is paired with. Add the soundbar instead."
+    },
+    "abort": {
+      "already_configured": "This speaker is already set up.",
+      "cannot_connect": "The speaker could not be reached.",
+      "not_enchant": "This device is not a Harman Kardon Enchant speaker.",
+      "sub_via_soundbar": "The Enchant Sub works through the Enchant soundbar it is paired with. Add the soundbar instead."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "dolby_atmos": {
+        "name": "Dolby Atmos"
+      }
+    },
+    "button": {
+      "calibrate": {
+        "name": "Calibrate"
+      },
+      "moment": {
+        "name": "Moment"
+      }
+    },
+    "number": {
+      "audio_sync": {
+        "name": "Audio sync"
+      },
+      "sleep_timer": {
+        "name": "Sleep timer"
+      },
+      "eq_band": {
+        "name": "Equalizer {band}"
+      }
+    },
+    "select": {
+      "eq_preset": {
+        "name": "Equalizer preset"
+      },
+      "atmos_level": {
+        "name": "Atmos level",
+        "state": {
+          "low": "Low",
+          "medium": "Mid",
+          "high": "High"
+        }
+      }
+    },
+    "sensor": {
+      "audio_format": {
+        "name": "TV audio format"
+      },
+      "playing_source": {
+        "name": "Playing source",
+        "state": {
+          "tv": "TV",
+          "hdmi": "HDMI",
+          "bluetooth": "Bluetooth",
+          "airplay": "AirPlay",
+          "google_cast": "Google Cast",
+          "spotify": "Spotify",
+          "dlna": "DLNA",
+          "idle": "Idle",
+          "other": "Other"
+        },
+        "state_attributes": {
+          "source_name": {
+            "name": "Source name"
+          }
+        }
+      },
+      "sleep_timer_remaining": {
+        "name": "Sleep timer remaining"
+      },
+      "surround_layout": {
+        "name": "Surround layout"
+      }
+    },
+    "switch": {
+      "listen_mode": {
+        "name": "Listen mode"
+      },
+      "smart_mode": {
+        "name": "Smart mode"
+      },
+      "pure_voice": {
+        "name": "PureVoice"
+      },
+      "feedback_tones": {
+        "name": "Feedback tones"
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "dolby_atmos": {
+        "default": "mdi:dolby"
+      }
+    },
+    "button": {
+      "calibrate": {
+        "default": "mdi:sine-wave"
+      }
+    },
+    "number": {
+      "eq_band": {
+        "default": "mdi:tune"
+      },
+      "audio_sync": {
+        "default": "mdi:sync"
+      }
+    },
+    "select": {
+      "eq_preset": {
+        "default": "mdi:equalizer"
+      },
+      "atmos_level": {
+        "default": "mdi:dolby"
+      }
+    },
+    "sensor": {
+      "audio_format": {
+        "default": "mdi:folder-play"
+      },
+      "playing_source": {
+        "default": "mdi:volume-source",
+        "state": {
+          "tv": "mdi:television",
+          "hdmi": "mdi:video-input-hdmi",
+          "bluetooth": "mdi:bluetooth",
+          "airplay": "mdi:cast-audio-variant",
+          "google_cast": "mdi:cast",
+          "spotify": "mdi:spotify",
+          "dlna": "mdi:dlna"
+        }
+      },
+      "sleep_timer_remaining": {
+        "default": "mdi:av-timer"
+      },
+      "surround_layout": {
+        "default": "mdi:surround-sound"
+      }
+    },
+    "switch": {
+      "smart_mode": {
+        "default": "mdi:brain"
+      },
+      "listen_mode": {
+        "default": "mdi:account-voice"
+      },
+      "pure_voice": {
+        "default": "mdi:account-tie-voice",
+        "state": {
+          "off": "mdi:account-tie-voice-off"
+        }
+      },
+      "feedback_tones": {
+        "default": "mdi:bell",
+        "state": {
+          "off": "mdi:bell-off"
+        }
+      }
+    }
+  }
+}
