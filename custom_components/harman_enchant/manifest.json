@@ -1,6 +1,9 @@
 {
   "domain": "harman_enchant",
   "name": "Harman Kardon Enchant",
+  "categories": [
+    "media_entertainment.speakers_audio"
+  ],
   "codeowners": [
     "@bazsc20ne"
   ],
@@ -15,7 +18,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/bazsc20ne/ha-harman-enchant/issues",
   "requirements": [],
-  "version": "0.1.1",
+  "version": "0.1.2",
   "zeroconf": [
     "_jbl-product._tcp.local."
   ]

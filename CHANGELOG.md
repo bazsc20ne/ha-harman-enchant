@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- The manifest names the integration's category: Media & entertainment, Speakers & audio (`media_entertainment.speakers_audio`).
+
 ## 0.1.1
 
 - The speaker's server certificate is recorded when the speaker is added (for speakers added with 0.1.0: at the first start of this version), and every connection must present it. If it changes, Home Assistant asks whether to accept the new one.
