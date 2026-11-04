@@ -346,7 +346,10 @@ tap_action:
 The integration is in the default HACS catalog, which is the Marketplace from
 Home Assistant 2026.11 (**Settings → Marketplace**).
 
-1. In HACS or the Marketplace, search for **Harman Kardon Enchant** and download it.
+[![Open your Home Assistant instance and open this repository in HACS or the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bazsc20ne&repository=ha-harman-enchant&category=integration)
+
+1. Open it with the button above, or search for **Harman Kardon Enchant** in HACS
+   or the Marketplace, and download it.
 2. Restart Home Assistant.
 
 Alternatively, add `https://github.com/bazsc20ne/ha-harman-enchant` as a custom
