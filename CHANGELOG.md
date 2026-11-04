@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- The integration is in the default HACS catalog: the README now describes installing it from the HACS or Marketplace search, with the custom repository as an alternative.
+
 ## 0.1.2
 
 - The manifest names the integration's category: Media & entertainment, Speakers & audio (`media_entertainment.speakers_audio`).
