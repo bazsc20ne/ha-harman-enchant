@@ -115,5 +115,17 @@
         "name": "Feedback tones"
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "resume_player": "Resume playback after an AirPlay restart"
+        },
+        "data_description": {
+          "resume_player": "The media player to start again when the speaker's AirPlay service restarts while it is playing. Leave empty to turn this off."
+        }
+      }
+    }
   }
 }

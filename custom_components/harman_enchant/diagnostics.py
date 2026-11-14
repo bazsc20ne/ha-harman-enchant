@@ -52,6 +52,7 @@ async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: Enchant
     return async_redact_data(
         {
             "entry": dict(entry.data),
+            "options": dict(entry.options),
             "device_info": coordinator.device_info,
             "status": coordinator.status,
             "answers": coordinator.data.answers,

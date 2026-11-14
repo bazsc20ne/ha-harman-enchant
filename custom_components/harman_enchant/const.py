@@ -10,6 +10,14 @@ MANUFACTURER = "Harman Kardon"
 
 # Config entry key: the speaker's server certificate (PEM), recorded at setup.
 CONF_CERTIFICATE = "certificate"
+# Option: the media player to start again after the speaker's AirPlay service restarts.
+CONF_RESUME_PLAYER = "resume_player"
+
+AIRPLAY_SERVICE = "_airplay._tcp.local."
+# The service is back within seconds; give up if the player has not stopped and come back by then.
+RESUME_TIMEOUT_SECONDS = 60
+# Wait after the player stopped, so the AirPlay sender has set the speaker up again.
+RESUME_SETTLE_SECONDS = 2
 
 POLL_INTERVAL = timedelta(seconds=10)
 # Settings change rarely; they are read every SETTINGS_EVERY polls and after writes.

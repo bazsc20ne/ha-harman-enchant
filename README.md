@@ -136,8 +136,11 @@ local interface, so the integration cannot show or change them.
 ## Dashboard card
 
 The integration comes with its own dashboard card. There is nothing to download
-or to add under *Resources*; after installing or updating the integration, reload
-the dashboard once in the browser or the app.
+or to add under *Resources*. The card is loaded once the first speaker is set up:
+after adding the speaker, and after every update of the integration and the
+restart that follows, reload the page in the browser (F5) or close and reopen the
+app. Until then the dashboard shows *Custom element doesn't exist:
+harman-enchant-card*.
 
 Add it with **Edit dashboard → Add card → Harman Kardon Enchant**, or in YAML:
 
@@ -367,12 +370,30 @@ Speakers are discovered automatically on the network. You can also add one by ha
 enter the speaker's IP address. A fixed IP address (DHCP reservation) is
 recommended.
 
+### Resume playback after an AirPlay restart
+
+The Enchant 1100 tested here withdraws its AirPlay service from the network and
+announces it again about every 11 hours. Music Assistant then treats the speaker as
+gone and stops the stream, so the music stops.
+
+To have it started again, open the speaker under **Settings → Devices & services →
+Harman Kardon Enchant**, choose **Configure**, and pick the player that sends the
+music in **Resume playback after an AirPlay restart**, for example the speaker's
+Music Assistant player. When the speaker's AirPlay service goes away while that
+player is playing, the integration waits until the service is back and the player
+has stopped, then starts playback on it again. With Music Assistant this continues
+the same track close to where it stopped, after a few seconds of silence. If the
+service is not back or the player has not stopped within a minute, it does
+nothing. Leave the field empty to turn this off; it is off by default.
+
 ## How it works
 
 The speakers offer a local HTTPS command interface that only accepts clients with a
 known TLS client certificate, plus standard UPnP for volume, mute and event
 notifications. The integration polls the speaker every 10 seconds and listens for
 its UPnP events, so that track, volume and audio format changes show up at once.
+With the AirPlay resume option set, it also follows the speaker's AirPlay service
+announcements (mDNS) on the network.
 
 The client certificate in `custom_components/harman_enchant/certs/` is the one the
 vendor app uses; see [NOTICE](NOTICE) for where it comes from.

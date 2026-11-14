@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- New option: **resume playback after the speaker's AirPlay restart.** The Enchant 1100 tested here withdraws its AirPlay service from the network and announces it again about every 11 hours; Music Assistant then treats the speaker as gone and stops the stream, so the music stops. Choose a media player in the integration's options (for example the speaker's Music Assistant player): when the speaker's AirPlay service goes away while that player is playing, the integration waits until the service is back and starts playback on that player again. With Music Assistant this continues the same track close to where it stopped, after a few seconds of silence. Off by default.
+- Diagnostics include the integration's options.
+- README: the dashboard card is loaded once the first speaker is set up, so a page that was already open needs one reload after the speaker is added.
+
 ## 0.1.3
 
 - The integration is in the default HACS catalog: the README now describes installing it from the HACS or Marketplace search, with the custom repository as an alternative.

@@ -6,15 +6,17 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow, OptionsFlowWithReload
 from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import format_mac
+from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 import voluptuous as vol
 
 from .api import KIND_SUB, EnchantClient, EnchantError, create_ssl_context, device_kind, fetch_server_certificate
-from .const import CONF_CERTIFICATE, DOMAIN
+from .const import CONF_CERTIFICATE, CONF_RESUME_PLAYER, DOMAIN
 
 
 class NotEnchant(Exception):
@@ -29,6 +31,11 @@ class EnchantConfigFlow(ConfigFlow, domain=DOMAIN):
     """Add an Enchant speaker."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return EnchantOptionsFlow()
 
     def __init__(self) -> None:
         self._host: str | None = None
@@ -132,4 +139,18 @@ class EnchantConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm",
             description_placeholders={"name": entry.title, "host": host},
             errors=errors,
+        )
+
+
+class EnchantOptionsFlow(OptionsFlowWithReload):
+    """Options of one speaker."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+        schema = vol.Schema(
+            {vol.Optional(CONF_RESUME_PLAYER): EntitySelector(EntitySelectorConfig(domain="media_player"))}
+        )
+        return self.async_show_form(
+            step_id="init", data_schema=self.add_suggested_values_to_schema(schema, self.config_entry.options)
         )
